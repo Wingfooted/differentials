@@ -21,11 +21,12 @@ heat = expression(
 )
 
 u, params = heat.u()
-x = jnp.array((0, 1))
-print(u.apply(params, x))
-ux = jax.grad(u, argnums=0)
-print(ux)
-print(ux.__code__.co_varnames)
-
-print(forward(u, params, x))
-print(jax.grad(forward(u, params), argnums=1)(x))
+x = jnp.array([float(0), float(1)])
+f = lambda x, t, params: u.apply(params, jnp.array([x, t]))[0]  # Ensure scalar output (e.g., by taking [0])
+print(f(0, 1, params))  # Should print a scalar output
+f_x = jax.grad(f, argnums=0)  # Differentiating w.r.t. x
+f_xx = jax.grad(f_x, argnums=0)
+print(f_x(0.0, 1.0, params))  # Should print the gradient w.r.t. x at (0, 1)
+print(f_xx(0.0, 1.0, params))  # Should print the gradient w.r.t. x at (0, 1)
+hessian_f = jax.hessian(f)
+print(hessian_f(0.0, 1.0, params))  # Should print the Hessian matrix at (0, 1)
