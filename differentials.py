@@ -48,7 +48,7 @@ class expression:
 
         value: jax.Array = jnp.array((0))
 
-        value += self.function(U, *args)
+        value += self.function(U)(*args)
 
         return value
 
@@ -63,8 +63,15 @@ class expression:
             element = random.choice(forward_rng, domain)
             x.append(element)
         params = u_hat.init(model_rng, jnp.array(x))
-        return u_hat, params
 
-
-def forward(u, params,  x):
-    return u.apply(params, x)
+        # output, differentiable function, params (params from flax)
+        ''' def lambda_exp(params, *args):
+            #print("params", str(params)[:50])
+            #print("going into args", args)
+            u = u_hat.apply(jax.lax.stop_gradient(params),
+                            jnp.array(args))
+          return u'''
+       # return lambda_exp, params
+        return lambda params, *args: u_hat.apply(
+            jax.lax.stop_gradient(params),
+            jnp.array(args))[0], params
