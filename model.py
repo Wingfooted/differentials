@@ -18,5 +18,4 @@ class Model(nn.Module):
             # x = nn.BatchNorm(use_running_average=not self.train)(x)
             x = nn.selu(x)
         x = nn.Dense(1)(x)
-        return nn.relu(x)
-    
+        return nn.selu(x)

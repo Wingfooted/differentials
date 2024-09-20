@@ -21,6 +21,7 @@ class expression:
     def __init__(self, function: Callable,
                  var: Tuple[str],
                  *args, **kwargs):
+
         # heat = expression(
         #     lambda u, x, t: u.dt() + u.dx().dx(),
         #     var = ("x", "t"),
@@ -40,24 +41,23 @@ class expression:
             if str(key) in self.variables:
                 self.domains.append(value)
 
-    def loss(self, 
-                 U: Callable = lambda *args: None,
-		*args) -> float:
+    def loss(self,
+             U: Callable = lambda *args: None,
+             *args) -> float:
+
         # expression(x1, x2, ... , xn) -> float
         # expression(x1, x2, ... , xn, U=U_validation) -> float
 
-        value: jax.Array = jnp.array((0))
-
-        value += self.function(U, *args)
+        value = self.function(U)(*args)
 
         return value
 
     def u(self,
           struct: Sequence[int] = (4, 5, 5, 4)
-            ) -> Tuple:
+          ) -> Tuple:
         schema = (len(self.variables), *struct)
         u_hat = Model(schema)
-        forward_rng, model_rng = random.split(random.key(0), (2,))
+        forward_rng, model_rng = random.split(random.key(1), (2,))
         x = list()
         for domain in self.domains:
             element = random.choice(forward_rng, domain)
@@ -66,5 +66,3 @@ class expression:
         return u_hat, params
 
 
-def forward(u, params,  x):
-    return u.apply(params, x)
