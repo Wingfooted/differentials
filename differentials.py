@@ -115,8 +115,17 @@ class initial(boundary):
         super().__init__(*args, **kwargs)
 
 
-def domain(a: int = 0, b: int = 1, rng=random.key(1)):
+def domain(a: float = 0.0, b: float = 1.0,
+           open_a: bool = True,
+           open_b: bool = True,
+           rng=random.key(1)):
+
     while True:
         rng, subkey = random.split(rng)
         sample = random.uniform(subkey, shape=(), minval=a, maxval=b)
-        yield sample
+        if not open_a and jnp.isclose(sample, jnp.array((a))):
+            pass
+        if not open_b and jnp.isclose(sample, jnp.aray((b))):
+            pass
+        else:
+            yield sample

@@ -5,6 +5,7 @@ import jax.numpy as jnp
 import flax
 
 from differentials import expression, domain, boundary, initial
+from tools import visualize_3d
 
 
 # struct = (4, 4, 4)
@@ -12,24 +13,21 @@ from differentials import expression, domain, boundary, initial
 # assumes u_hat
 
 
-def make_pde_loss(expression):
-    u_hat, _ = expression.u((4, 4, 4))
+def make_loss(expression, n=40):
+    u_hat, _ = expression.u()
+    # hyper param, num of samples per loss
+    xs = expression.matrix(n)
     def loss(params):
-        # make values
-        n = 30  # hyper parameter, mean samples taken
-        xs_matrix = expression.matrix(n)
-        def rnd_instance_val(x):
-            print(x)
+        def loss_unit(x):
             error = expression.loss(
-                    lambda x, t: u_hat.apply(params, jnp.array((x, t))),
-                    *[num for num in x]
+                lambda x, t: u_hat.apply(params, jnp.array((x, t)))[0],
+                x[0], x[1]  # this is for x and t. No better way exists to do this
             )
-            print("here", error)
             return error
-
-        return jnp.mean(jax.vmap(rnd_instance_val, in_axes=0)(xs_matrix))
+        return jnp.max(jax.vmap(loss_unit)(xs))
+        return jnp.mean(jax.vmap(loss_unit)(xs))
+        # here there is a contention. What loss is better, the worst point tested, or the average point tested
     return jax.jit(loss)
-
 
 # TRAINING A MODEL on an Expression
 
@@ -71,7 +69,4 @@ if __name__ == '__main__':
     )
 
     u_hat, params = heat.u()
-    test_loss = make_pde_loss(heat)
-    value_and_grad_fn = jax.value_and_grad
-    print(test_loss(params))
-
+    visualize_3d(lambda x: u_hat.apply(params, x), heat)
