@@ -40,31 +40,37 @@ if __name__ == '__main__':
     dx = lambda u: jax.grad(u, argnums=0)
     dt = lambda u: jax.grad(u, argnums=1)
 
-    heat = expression(
-        lambda u: lambda x, t: dt(u)(x, t) + 0.001 * dx(dx(u))(x, t),
+    sine_gordon = expression(
+        lambda u: lambda x, t: dt(dt(u))(x, t) - dx(dx(u))(x, t) - jnp.sin(u(x, t)),
         var=("x", "t"),
         boundaries=(
-            # insulated ends u_x(0, t) = 0
+            # u(-10, t) = 0 (Dirichlet boundary condition)
             boundary(
                 LHS=lambda u: lambda x, t: u(x, t),
-                RHS=lambda u: lambda x, t: 1,
-                con=(0.0, "t")
+                RHS=lambda u: lambda x, t: 0,
+                con=(-10.0, "t")
             ),
-            # insulated end u_x(L, t) = 0
+            # u(10, t) = 0 (Dirichlet boundary condition)
             boundary(
                 LHS=lambda u: lambda x, t: u(x, t),
-                RHS=lambda u: lambda x, t: -1,
-                con=(1.0, "t")
+                RHS=lambda u: lambda x, t: 0,
+                con=(10.0, "t")
             ),
-            # inital function. u(x, 0) = sin(x)
+            # u(x, 0) = 4 * arctan(exp(x)) (initial condition)
             initial(
                 LHS=lambda u: lambda x, t: u(x, t),
-                RHS=lambda u: lambda x, t: 2 * jnp.exp(x)-1, 
+                RHS=lambda u: lambda x, t: 4 * jnp.arctan(jnp.exp(x)),
+                con=("x", 0.0)
+            ),
+            # u_t(x, 0) = 0 (initial velocity)
+            initial(
+                LHS=lambda u: lambda x, t: dt(u)(x, t),
+                RHS=lambda u: lambda x, t: 0,
                 con=("x", 0.0)
             )
         ),
-        x=domain(-1, 1),
-        t=domain(0, 29)
+        x=domain(-10, 10),
+        t=domain(0, 10)
     )
 
     '''initial(
@@ -75,14 +81,14 @@ if __name__ == '__main__':
     # initial visualize_3d(lambda x: u_hat.apply(params, x), heat, defenition=80)
 
     model_structure = (30, 30, 30, 30, 30, 30, 30, 30, 30, 30)
-    epochs = 1000
+    epochs = 100
     epoch_logs = 1  # how often to log loss
-    lr = 0.001
-    gamma = 0.99
-    epsilon = 1e-6
+    lr = 0.0001
+    gamma = 0.999
+    epsilon = 1e-10
 
     # initializing model / params
-    u_hat, params = heat.u(struct=model_structure)
+    u_hat, params = sine_gordon.u(struct=model_structure)
     velocity = jax.tree.map(lambda p: jnp.zeros_like(p), params)  # empty params
 
     @jax.jit
@@ -91,7 +97,7 @@ if __name__ == '__main__':
         params = jax.tree.map(lambda p, g, v: p - (lr / (jnp.sqrt(v) + epsilon)) * g, params, grads, velocity)
         return velocity, params
 
-    heat_loss = make_loss(heat, n=50000, struct=model_structure)
+    heat_loss = make_loss(sine_gordon, n=10000, struct=model_structure)
     for epoch in range(epochs):
         loss, grads = jax.value_and_grad(heat_loss)(params)
         # gradient descent component
@@ -103,4 +109,4 @@ if __name__ == '__main__':
         if epoch % epoch_logs == 0:
             print(f"epoch: {epoch}, loss: {loss}")
 
-    visualize_3d(lambda x: u_hat.apply(params, x), heat, defenition=200)
+    visualize_3d(lambda x: u_hat.apply(params, x), sine_gordon, defenition=200)

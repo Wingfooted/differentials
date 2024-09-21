@@ -6,7 +6,7 @@ import jax
 class Model(nn.Module):
     model_layout: Sequence[int] = (20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20)
     kernel_init: Callable = nn.initializers.xavier_uniform()
-    bias_init: Callable = nn.initializers.normal(stddev=1e-6)
+    bias_init: Callable = nn.initializers.normal(stddev=1e-3)
     # train: bool = False
 
     @nn.compact
@@ -16,6 +16,6 @@ class Model(nn.Module):
                          kernel_init=self.kernel_init,
                          bias_init=self.bias_init)(x)
             # x = nn.BatchNorm(use_running_average=not self.train)(x)
-            x = nn.relu(x)
+            x = nn.selu(x)
         x = nn.Dense(1)(x)
         return nn.selu(x)
