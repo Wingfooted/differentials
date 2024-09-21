@@ -45,18 +45,19 @@ class expression:
         # expression(x1, x2, ... , xn, U=U_validation) -> float
 
         value = self.function(U)(*args)
+        value = jnp.abs(value)
 
         boundary_loss = value
         if self.boundaries_defined:
             for boundary in self.boundaries:
                 instance_loss = boundary(U, *args)
-                boundary_loss += instance_loss
+                boundary_loss += jnp.abs(instance_loss)
         boundary_loss -= value
 
         return boundary_loss + value
 
     def u(self,
-          struct: Sequence[int] = (4, 5, 5, 4)
+          struct: Sequence[int] = (8, 8, 8, 8, 8, 8)
           ) -> Tuple:
         schema = (len(self.variables), *struct)
         u_hat = Model(schema)

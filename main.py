@@ -13,7 +13,7 @@ from tools import visualize_3d
 # assumes u_hat
 
 
-def make_loss(expression, n=40):
+def make_loss(expression, n=100):
     u_hat, _ = expression.u()
     # hyper param, num of samples per loss
     xs = expression.matrix(n)
@@ -25,7 +25,6 @@ def make_loss(expression, n=40):
             )
             return error
         return jnp.max(jax.vmap(loss_unit)(xs))
-        return jnp.mean(jax.vmap(loss_unit)(xs))
         # here there is a contention. What loss is better, the worst point tested, or the average point tested
     return jax.jit(loss)
 
@@ -42,31 +41,65 @@ if __name__ == '__main__':
     dt = lambda u: jax.grad(u, argnums=1)
 
     heat = expression(
-        lambda u: lambda x, t: dt(u)(x, t) + dx(dx(u))(x, t),
+        lambda u: lambda x, t: dt(u)(x, t) + 10 * dx(dx(u))(x, t),
         var=("x", "t"),
         boundaries=(
             # insulated ends u_x(0, t) = 0
             boundary(
-                LHS=lambda u: lambda x, t: dx(u)(x, t),
+                LHS=lambda u: lambda x, t: u(x, t),
                 RHS=lambda u: lambda x, t: 0.0,
                 con=(0.0, "t")
             ),
             # insulated end u_x(L, t) = 0
             boundary(
-                LHS=lambda u: lambda x, t: dx(u)(x, t),
+                LHS=lambda u: lambda x, t: u(x, t),
                 RHS=lambda u: lambda x, t: 0.0,
                 con=(1.0, "t")
             ),
             # inital function. u(x, 0) = sin(x)
             initial(
                 LHS=lambda u: lambda x, t: u(x, t),
-                RHS=lambda u: lambda x, t: jnp.sin(x),
+                RHS=lambda u: lambda x, t: jnp.sin(x * jnp.pi) * jnp.exp(x), 
                 con=("x", 0.0)
             )
         ),
-        x=domain(0, 1),
+        x=domain(-1, 1),
         t=domain(0, 1)
     )
 
+    '''initial(
+        LHS=lambda u: lambda x, t: u(x, t),
+            RHS=lambda u: lambda x, t: 0.5,
+            con=(0.1, 0.5)
+    )'''
+    # initial visualize_3d(lambda x: u_hat.apply(params, x), heat, defenition=80)
+
+    model_structure = (8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8)
+    epochs = 50
+    epoch_logs = 1  # how often to log loss
+    lr = 0.01
+    gamma = 0.999
+    epsilon = 1e-6
+
+    # initializing model / params
     u_hat, params = heat.u()
-    visualize_3d(lambda x: u_hat.apply(params, x), heat)
+    velocity = jax.tree.map(lambda p: jnp.zeros_like(p), params) # empty params
+
+    @jax.jit
+    def param_update(params, grads, velocity):
+        velocity = jax.tree.map(lambda v, g: gamma * v + (1-gamma) * jnp.square(g), velocity, grads)
+        params = jax.tree.map(lambda p, g, v: p - (lr / (jnp.sqrt(v) + epsilon)) * g, params, grads, velocity)
+        return velocity, params
+
+    for epoch in range(epochs):
+        heat_loss = make_loss(heat)
+        loss, grads = jax.value_and_grad(heat_loss)(params)
+        # gradient descent component
+        velocity, params = param_update(params, grads, velocity)
+        # velocity = jax.tree.map(lambda v, g: gamma * v + (1-gamma) * jnp.square(g), velocity, grads)
+        # params = jax.tree.map(lambda p, g, v: p - (lr / (jnp.sqrt(v) + epsilon)) * g, params, grads, velocity)
+
+        if epoch % epoch_logs == 0:
+            print(f"epoch: {epoch}, loss: {loss}")
+
+    visualize_3d(lambda x: u_hat.apply(params, x), heat, defenition=150)
