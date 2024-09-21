@@ -16,15 +16,15 @@ def make_pde_loss(expression):
     u_hat, _ = expression.u((4, 4, 4))
     def loss(params):
         # make values
-        n = 30  # HYPER PARAMETER, mean samples taken
+        n = 30  # hyper parameter, mean samples taken
         xs_matrix = expression.matrix(n)
         def rnd_instance_val(x):
             print(x)
             error = expression.loss(
                     lambda x, t: u_hat.apply(params, jnp.array((x, t))),
-                    x
+                    *[num for num in x]
             )
-            print("HERE", error)
+            print("here", error)
             return error
 
         return jnp.mean(jax.vmap(rnd_instance_val, in_axes=0)(xs_matrix))

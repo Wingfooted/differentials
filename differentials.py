@@ -63,24 +63,25 @@ class expression:
         forward_rng, model_rng = random.split(random.key(1), (2,))
         x = list()
         for domain in self.domains:
-            element = domain() 
+            element = next(domain)
             x.append(element)
         params = u_hat.init(model_rng, jnp.array(x))
         return u_hat, params
 
     def vector(self) -> jnp.array:
         # retuns a vector domain
-        vector_internal = [domain() for domain in self.domains]
+        vector_internal = [next(domain) for domain in self.domains]
         return jnp.array(vector_internal)
 
     def matrix(self, n: int = 1) -> jnp.array:
         # returns a matrix of domain # traversal row wise
-        matrix_internal = [(domain(n)) for domain in self.domains]
-        return jnp.array(matrix_internal).T
+        matrix_internal = [(self.vector()) for _ in range(n)]
+        return jnp.array(matrix_internal)
+
 
 class boundary:
     def __init__(self, LHS: Callable,
-                 RHS: Callable, 
+                 RHS: Callable,
                  con: Tuple):
 
         self.RHS = RHS
@@ -114,20 +115,8 @@ class initial(boundary):
         super().__init__(*args, **kwargs)
 
 
-class domain:
-    #this could probably be done with a generator
-    def __init__(self, a: int = 0, b: int = 1,
-                 open_a: bool = True, open_b: bool = True,
-                 rng=random.key(0)):
-
-        self.lower_bound = a
-        self.upper_bound = b
-        self.rng = rng
-
-    def __call__(self, n=1):
-        self.rng = random.split(self.rng)[1]
-
-        return random.uniform(self.rng,
-                             shape=(n,),
-                             minval=self.lower_bound,
-                             maxval=self.upper_bound)
+def domain(a: int = 0, b: int = 1, rng=random.key(1)):
+    while True:
+        rng, subkey = random.split(rng)
+        sample = random.uniform(subkey, shape=(), minval=a, maxval=b)
+        yield sample
