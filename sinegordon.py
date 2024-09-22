@@ -24,7 +24,7 @@ def make_loss(expression, n=100, struct=(1, 1)):
                 x[0], x[1]  # this is for x and t. No better way exists to do this
             )
             return error
-        return jnp.max(jax.vmap(loss_unit)(xs))
+        return jnp.mean(jax.vmap(loss_unit)(xs))
         # here there is a contention. What loss is better, the worst point tested, or the average point tested
     return jax.jit(loss)
 
@@ -57,22 +57,26 @@ if __name__ == '__main__':
                 con=(10.0, "t")
             ),
             # u(x, 0) = 4 * arctan(exp(x)) (initial condition)
-            initial(
-                LHS=lambda u: lambda x, t: u(x, t),
-                RHS=lambda u: lambda x, t: 4 * jnp.arctan(jnp.exp(x)),
-                con=("x", 0.0)
-            ),
             # u_t(x, 0) = 0 (initial velocity)
             initial(
                 LHS=lambda u: lambda x, t: dt(u)(x, t),
                 RHS=lambda u: lambda x, t: 0,
                 con=("x", 0.0)
-            )
+            ),
+            initial(
+                LHS=lambda u: lambda x, t: u(x, t),
+                RHS=lambda u: lambda x, t: 4 * jnp.arctan(x), 
+                con=("x", 0.0)
+            ),
         ),
         x=domain(-10, 10),
         t=domain(0, 10)
     )
 
+    '''initial( LHS=lambda u: lambda x, t: u(x, t),
+        RHS=lambda u: lambda x, t: 4 * jnp.arctan(jnp.exp(x)),
+        con=("x", 0.0)
+    ),'''
     '''initial(
         LHS=lambda u: lambda x, t: u(x, t),
             RHS=lambda u: lambda x, t: 0.5,
@@ -81,7 +85,7 @@ if __name__ == '__main__':
     # initial visualize_3d(lambda x: u_hat.apply(params, x), heat, defenition=80)
 
     model_structure = (30, 30, 30, 30, 30, 30, 30, 30, 30, 30)
-    epochs = 100
+    epochs = 500
     epoch_logs = 1  # how often to log loss
     lr = 0.0001
     gamma = 0.999
@@ -97,8 +101,8 @@ if __name__ == '__main__':
         params = jax.tree.map(lambda p, g, v: p - (lr / (jnp.sqrt(v) + epsilon)) * g, params, grads, velocity)
         return velocity, params
 
-    heat_loss = make_loss(sine_gordon, n=10000, struct=model_structure)
     for epoch in range(epochs):
+        heat_loss = make_loss(sine_gordon, struct=model_structure, n=1000)
         loss, grads = jax.value_and_grad(heat_loss)(params)
         # gradient descent component
         velocity, params = param_update(params, grads, velocity)
@@ -109,4 +113,4 @@ if __name__ == '__main__':
         if epoch % epoch_logs == 0:
             print(f"epoch: {epoch}, loss: {loss}")
 
-    visualize_3d(lambda x: u_hat.apply(params, x), sine_gordon, defenition=200)
+    visualize_3d(lambda x: u_hat.apply(params, x), sine_gordon, defenition=70)
