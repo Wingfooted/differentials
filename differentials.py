@@ -53,7 +53,7 @@ class expression:
                 instance_loss = boundary(U, *args)
                 boundary_loss += jnp.abs(instance_loss)
         boundary_loss -= value
-
+        
         return boundary_loss + value
 
     def u(self,

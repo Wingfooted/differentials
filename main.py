@@ -5,13 +5,18 @@ import jax.numpy as jnp
 import flax
 
 from differentials import expression, domain, boundary, initial
-from tools import visualize_3d
+from tools import visualize_3d, loss_map
 
 
 # struct = (4, 4, 4)
 # makes loss from a PDE expression
 # assumes u_hat
-
+def raw_loss(x, y, params, model, expression):
+    error = expression.loss(
+        lambda x, t: u_hat.apply(params, jnp.array((x, t)))[0],
+        x[0], x[1]  # this is for x and t. No better way exists to do this
+    )
+    return error
 
 def make_loss(expression, n=100, struct=(1, 1)):
     u_hat, _ = expression.u(struct=struct)
@@ -24,8 +29,9 @@ def make_loss(expression, n=100, struct=(1, 1)):
                 x[0], x[1]  # this is for x and t. No better way exists to do this
             )
             return error
-        return jnp.max(jax.vmap(loss_unit)(xs))
+        return jnp.mean(jax.vmap(loss_unit)(xs))
         # here there is a contention. What loss is better, the worst point tested, or the average point tested
+    return loss
     return jax.jit(loss)
 
 # TRAINING A MODEL on an Expression
@@ -91,8 +97,8 @@ if __name__ == '__main__':
         params = jax.tree.map(lambda p, g, v: p - (lr / (jnp.sqrt(v) + epsilon)) * g, params, grads, velocity)
         return velocity, params
 
-    heat_loss = make_loss(heat, n=50000, struct=model_structure)
     for epoch in range(epochs):
+        heat_loss = make_loss(heat, struct=model_structure)
         loss, grads = jax.value_and_grad(heat_loss)(params)
         # gradient descent component
         velocity, params = param_update(params, grads, velocity)
@@ -102,5 +108,10 @@ if __name__ == '__main__':
 
         if epoch % epoch_logs == 0:
             print(f"epoch: {epoch}, loss: {loss}")
+            # loss map
+            loss_fn = lambda x, t: raw_loss(x, t, params, u_hat, heat)
+            xt_domains = (jnp.linspace(0, 10), jnp.linspace(0, 5))
+            loss_map(loss_fn, *xt_domains)
+
 
     visualize_3d(lambda x: u_hat.apply(params, x), heat, defenition=200)

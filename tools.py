@@ -59,4 +59,41 @@ def visualize_3d(u: Callable, expression, defenition: int = 1000, title="U"):
 
     plt.show()
 
-    
+
+def _make_loss_map_data(f: Callable, *args, defenition=100):
+    empty = list()
+    for x in args[0]:
+        for y in args[1]:
+            empty.append((x, y))
+    xs = jnp.array(empty)
+    ys = jax.vmap(lambda x: f(x))(xs)
+    return jnp.concat((xs,ys))
+
+    xs = jnp.array(xs)
+    print(xs)
+    ys = jax.vmap(lambda x: f(x))(xs)
+
+def plot_3d(data):
+    x = data[:, 0]
+    t = data[:, 1]
+    l = data[:, 2] # l for loss
+
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    scatter = ax.scatter(x, t, u, c=u, cmap='viridis', marker='o')
+
+    variable_names = expression.variables
+
+    ax.set_zlabel('loss')
+
+    # Optional: Add a color bar
+    cbar = plt.colorbar(scatter, ax=ax)
+    cbar.set_label('loss')
+
+    plt.show()
+
+def loss_map(f: Callable, *args, defenition=50):
+    # args assumed to be linsapce
+    # make loss data
+    data = _make_loss_map_data(f, *args, defenition=defenition)
+    plot_3d(data)
