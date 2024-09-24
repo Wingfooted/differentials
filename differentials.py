@@ -30,7 +30,7 @@ class expression:
         for key, value in kwargs.items():
             if str(key) in self.variables:
                 self.domains.append(value)
-        
+
         self.boundaries_defined = True
         if boundaries:
             self.boundaries = boundaries
@@ -53,7 +53,7 @@ class expression:
                 instance_loss = boundary(U, *args)
                 boundary_loss += jnp.abs(instance_loss)
         boundary_loss -= value
-        
+
         return boundary_loss + value
 
     def u(self,

@@ -46,8 +46,10 @@ if __name__ == '__main__':
     dx = lambda u: jax.grad(u, argnums=0)
     dt = lambda u: jax.grad(u, argnums=1)
 
+    c = lambda x, t: jax.array((x, t))
+
     heat = expression(
-        lambda u: lambda x, t: dt(u)(x, t) + 0.001 * dx(dx(u))(x, t),
+        lambda u: lambda x, t: dt(u)(c(x, t)) + 0.001 * dx(dx(u))(c(x, t)),
         var=("x", "t"),
         boundaries=(
             # insulated ends u_x(0, t) = 0
@@ -64,7 +66,7 @@ if __name__ == '__main__':
             ),
             # inital function. u(x, 0) = sin(x)
             initial(
-                LHS=lambda u: lambda x, t: u(x, t),
+                LHS=lambda u: lambda x, t: u(c(x, t)),
                 RHS=lambda u: lambda x, t: 2 * jnp.exp(x)-1, 
                 con=("x", 0.0)
             )
