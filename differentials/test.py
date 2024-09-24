@@ -1,7 +1,7 @@
 import jax
 import jax.numpy as jnp
 
-from boundary import function, dx, dt, term
+from boundary import function, dx, dt
 
 # dx = lambda u: jax.grad(u, argnums=0)
 
@@ -27,10 +27,23 @@ print("here", cost_expr(f)(x))
 
 # testing addition of numbers
 print("MULTIPLICATION DEALING ---------------")
-div_expr = dx(u)*dt(u)
-print(dx(u)(f)(x))
-print(dt(u)(f)(x))
+div_expr = dx(u)*2
 print(div_expr(f)(x))
+
+# testing the divison of terms
+print("Divison ---------------")
+div_expr = dx(u)/dt(u)
+print(dx(u)(f)(x), dt(u)(f)(x))
+print(div_expr(f)(x))
+
+print("exponention")
+exp_epr = dx(u) ** dt(u)
+print(exp_epr(f)(x))
+
+print("ARRAY UFUNC - sin")
+ufunc_expr = jnp.sin(u)
+print(ufunc_expr(f)(x))
+
 
 expr = u == 4
 expr1 = -4 == u

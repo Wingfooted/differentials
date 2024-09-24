@@ -18,7 +18,12 @@ class term:
         self.func = func
 
     def __call__(self, u):
+        print("CALLED")
         return lambda x: self.func(u)(x)
+
+    def __repr__(self):
+        print("BRUH")
+        return self
 
     def __eq__(self, other):
         # evaluated RHS - LHS
@@ -40,7 +45,8 @@ class term:
         return term(lambda u: lambda x: self(u)(x) - corrected_other(u)(x))
 
     def __pow__(self, other):
-        pass
+        corrected_other = self.convert_other(other)
+        return term(lambda u: lambda x: self(u)(x) ** corrected_other(u)(x))
 
     def __mul__(self, other):
         corrected_other = self.convert_other(other)
@@ -50,6 +56,15 @@ class term:
         corrected_other = self.convert_other(other)
         print("true_div")
         return term(lambda u: lambda x: self(u)(x) / corrected_other(u)(x))
+    
+    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        print("calling ufunc")  # Optional: for debugging
+        if method == '__call__':
+            # Handle the case where the term is passed to a ufunc like jnp.sin
+            return term(lambda u: lambda x: ufunc(self(u)(x)))
+        else:
+            # For other methods, you may want to handle them or raise an error
+            raise NotImplementedError(f"Method {method} not implemented for ufuncs.")
 
     def convert_other(self, other):
         if isinstance(other, term):
@@ -80,4 +95,3 @@ class manual_function:
 
 dx = derivative(0)
 dt = derivative(1)
-sin = manual_function(lambda x: jnp.sin(x))
