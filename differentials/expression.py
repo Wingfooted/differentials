@@ -1,7 +1,9 @@
 import jax
 import jax.numpy as jnp
+import jax.random as random
 
-from typing import Callable
+from typing import Callable, Tuple, Sequence
+from model import Model
 
 from domain import domain
 
@@ -101,10 +103,22 @@ class expression:
                  *loss_fns,
                  **domains):
         self.number_independent = len(domains.keys())
-        
+        self.loss_conditions = loss_fns
+        self.kwargs = domains
+        self.domains = [domain("XER") if d == True else d for d in domains.values()]
+        self.vars = domains.keys()
 
-    def loss(self, x):
+    def loss(self, u: Callable, x: jax.Array):
         # where x is a vector
-       pass 
+        total_loss = jnp.array((0))
+        for fn in self.loss_conditions:
+            total_loss += jnp.abs(fn(u)(x))
+        return total_loss
 
-
+    def u(self, struct: Sequence[int] = (8, 8, 8, 8), start_point: int = 0) -> Tuple:
+        schema = (len(self.vars), *struct)
+        u_hat = Model(schema)
+        forward_rng, model_rng = random.split(random.key(start_point))
+        x = random.uniform(forward_rng, (self.number_independent,))
+        params = u_hat.init(model_rng, x)
+        return u_hat, params

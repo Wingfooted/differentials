@@ -59,3 +59,5 @@ print(dx(dx(u))(f)(x))
 print(sin(dx(u))(f)(x))
 print(dx(sin(u))(f)(x))
 print(dt(u)(f)(x))
+
+
