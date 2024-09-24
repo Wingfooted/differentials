@@ -1,7 +1,7 @@
 import jax
 import jax.numpy as jnp
 
-from boundary import function, dx, dt
+from differentials import function, dx, dt, sin
 
 # dx = lambda u: jax.grad(u, argnums=0)
 
@@ -9,6 +9,12 @@ u = function()
 x = jnp.array((1.0, 4.0))
 
 f = lambda x: jnp.sin(x[0]) * jnp.cos(x[1]) + jnp.exp(x[0])
+
+test = sin(u)
+print(test(f)(x))
+
+heat = dx(dx(u)) == dt(u)/8
+print(heat(f)(x))
 
 # term adding
 expr_add = u + dx(u) == dt(u) + dx(dx(u)) + dx(u)
@@ -40,23 +46,16 @@ print("exponention")
 exp_epr = dx(u) ** dt(u)
 print(exp_epr(f)(x))
 
-print("ARRAY UFUNC - sin")
-ufunc_expr = jnp.sin(u)
-print(ufunc_expr(f)(x))
-
-
 expr = u == 4
 expr1 = -4 == u
 print(type(expr(f)(x)), expr(f)(x))
 print(type(expr1(f)(x)), expr1(f)(x))
 
-# print(u(f)(x))
-# print(const(f)(x))
-# print(u(f)(x)+const(f)(x))
-
-# print(expr(f)(x))
-
-
-# manual diff
-
-
+print("complex expression")
+expr1_complex = dx(dx(u)) + sin(dx(u)) + dx(sin(u)) * dt(u) == 5
+print(expr1_complex(f)(x))
+print()
+print(dx(dx(u))(f)(x))
+print(sin(dx(u))(f)(x))
+print(dx(sin(u))(f)(x))
+print(dt(u)(f)(x))
