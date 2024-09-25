@@ -1,4 +1,4 @@
-from expression import term, derivative, manual_function
+from .expression import term, derivative, manual_function
 
 import jax
 import jax.numpy as jnp

@@ -20,9 +20,9 @@ def make_loss(expression, n=100, struct=(1, 1)):
             loss_val = expression.loss(
                     lambda x: u_hat.apply(params, x),
                     x)
-            return error
+            return loss_val
         return jnp.mean(jax.vmap(loss_unit)(xs))
-    return jax.jit(loss)
+    return jax.jit(pde_loss)
 
 
 def train(expression,
@@ -55,5 +55,7 @@ def train(expression,
 
         if epoch % epoch_log == 0:
             print(f"epoch: {epoch}, loss: {loss_val}")
+
+    return model, params
 
     return lambda x: u_hat.apply(params, x)

@@ -1,6 +1,5 @@
 from train import train
-from differentials.expression import expression, function
-from differentials.differentials import dx, dt
+from differentials import expression, function, dx, dt
 
 u = function()
 
@@ -11,5 +10,7 @@ heat = expression(
         y=True
 )
 
-heat_model = train(heat, epochs=20)
+heat_model, params = train(heat, epochs=20)
+
+
 

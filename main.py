@@ -46,7 +46,7 @@ if __name__ == '__main__':
     dx = lambda u: jax.grad(u, argnums=0)
     dt = lambda u: jax.grad(u, argnums=1)
 
-    c = lambda x, t: jax.array((x, t))
+    c = lambda x, t: jnp.array((x, t))
 
     heat = expression(
         lambda u: lambda x, t: dt(u)(c(x, t)) + 0.001 * dx(dx(u))(c(x, t)),

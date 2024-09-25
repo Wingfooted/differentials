@@ -3,9 +3,9 @@ import jax.numpy as jnp
 import jax.random as random
 
 from typing import Callable, Tuple, Sequence
-from model import Model
+from .model import Model
 
-from domain import domain
+from .domain import domain
 
 
 class term:
