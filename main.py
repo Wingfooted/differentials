@@ -13,18 +13,18 @@ from tools import visualize_3d
 # assumes u_hat
 
 
-def make_loss(expression, n=100, struct=(1, 1)):
+def make_loss(expression, n=1000, struct=(1, 1)):
     u_hat, _ = expression.u(struct=struct)
     # hyper param, num of samples per loss
-    xs = expression.matrix(n)
     def loss(params):
+        xs = expression.matrix(n)
         def loss_unit(x):
             error = expression.loss(
                 lambda x, t: u_hat.apply(params, jnp.array((x, t)))[0],
                 x[0], x[1]  # this is for x and t. No better way exists to do this
             )
             return error
-        return jnp.max(jax.vmap(loss_unit)(xs))
+        return jnp.mean(jax.vmap(loss_unit)(xs))
         # here there is a contention. What loss is better, the worst point tested, or the average point tested
     return jax.jit(loss)
 
@@ -75,7 +75,7 @@ if __name__ == '__main__':
     # initial visualize_3d(lambda x: u_hat.apply(params, x), heat, defenition=80)
 
     model_structure = (30, 30, 30, 30, 30, 30, 30, 30, 30, 30)
-    epochs = 1000
+    epochs = 10
     epoch_logs = 1  # how often to log loss
     lr = 0.001
     gamma = 0.99
@@ -85,13 +85,12 @@ if __name__ == '__main__':
     u_hat, params = heat.u(struct=model_structure)
     velocity = jax.tree.map(lambda p: jnp.zeros_like(p), params)  # empty params
 
-    @jax.jit
     def param_update(params, grads, velocity):
         velocity = jax.tree.map(lambda v, g: gamma * v + (1-gamma) * jnp.square(g), velocity, grads)
         params = jax.tree.map(lambda p, g, v: p - (lr / (jnp.sqrt(v) + epsilon)) * g, params, grads, velocity)
         return velocity, params
 
-    heat_loss = make_loss(heat, n=50000, struct=model_structure)
+    heat_loss = make_loss(heat, n=100, struct=model_structure)
     for epoch in range(epochs):
         loss, grads = jax.value_and_grad(heat_loss)(params)
         # gradient descent component
@@ -102,5 +101,6 @@ if __name__ == '__main__':
 
         if epoch % epoch_logs == 0:
             print(f"epoch: {epoch}, loss: {loss}")
+    u = lambda x: u_hat.apply(params, x),
 
-    visualize_3d(lambda x: u_hat.apply(params, x), heat, defenition=200)
+    visualize_3d(u, heat, defenition=200)

@@ -4,7 +4,7 @@ import jax.numpy as jnp
 
 import flax
 
-from differentials import expression, domain, boundary, initial
+from diff import expression, domain, boundary, initial
 from tools import visualize_3d
 
 
@@ -16,8 +16,8 @@ from tools import visualize_3d
 def make_loss(expression, n=100, struct=(1, 1)):
     u_hat, _ = expression.u(struct=struct)
     # hyper param, num of samples per loss
-    xs = expression.matrix(n)
     def loss(params):
+        xs = expression.matrix(n)
         def loss_unit(x):
             error = expression.loss(
                 lambda x, t: u_hat.apply(params, jnp.array((x, t)))[0],
