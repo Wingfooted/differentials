@@ -44,22 +44,23 @@ class expression:
         # expression(x1, x2, ... , xn) -> float
         # expression(x1, x2, ... , xn, U=U_validation) -> float
 
-        value = self.function(U)(*args)
-        value = jnp.abs(value)
+        value = jnp.square(self.function(U)(*args))
 
         boundary_loss = value
         if self.boundaries_defined:
             for boundary in self.boundaries:
                 instance_loss = boundary(U, *args)
-                boundary_loss += jnp.abs(instance_loss)
-        boundary_loss -= value
-
+                boundary_loss += jnp.square(instance_loss)
         return boundary_loss + value
+
 
     def u(self,
           struct: Sequence[int] = (20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20)
           ) -> Tuple:
+<<<<<<< HEAD
         # schema = (len(self.variables), *struct)
+=======
+>>>>>>> new
         u_hat = Model(struct)
         forward_rng, model_rng = random.split(random.key(1), (2,))
         x = list()
@@ -107,7 +108,7 @@ class boundary:
         inputs = vals(con, args)
         rhs_value = self.RHS(u)(*inputs)
         lhs_value = self.LHS(u)(*inputs)
-        return jnp.abs(rhs_value - lhs_value)
+        return jnp.square(rhs_value - lhs_value)
 
 
 class initial(boundary):
