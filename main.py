@@ -38,7 +38,7 @@ if __name__ == '__main__':
     dt = lambda u: jax.grad(u, argnums=1)
 
     heat = expression(
-        lambda u: lambda x, t: dt(u)(x, t) + 0.001 * dx(dx(u))(x, t),
+        lambda u: lambda x, t: dt(u)(x, t) + 0.0001 * dx(dx(u))(x, t),
         var=("x", "t"),
         boundaries=(
             # insulated ends u_x(0, t) = 0
@@ -56,12 +56,12 @@ if __name__ == '__main__':
             # inital function. u(x, 0) = sin(x)
             initial(
                 LHS=lambda u: lambda x, t: u(x, t),
-                RHS=lambda u: lambda x, t: 2 * jnp.exp(x)-1, 
+                RHS=lambda u: lambda x, t: 2 * jnp.exp(jnp.pi * x),
                 con=("x", 0.0)
             )
         ),
         x=domain(-1, 1),
-        t=domain(0, 29)
+        t=domain(0, 3)
     )
 
     '''initial(
@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
     model_structure = (20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20)
 
-    epochs = 1000
+    epochs = 100000
     epoch_logs = 1  # how often to log loss
     lr = 0.001
     gamma = 0.99
@@ -88,7 +88,7 @@ if __name__ == '__main__':
         params = jax.tree.map(lambda p, g, v: p - (lr / (jnp.sqrt(v) + epsilon)) * g, params, grads, velocity)
         return velocity, params
 
-    heat_loss = make_loss(heat, n=100, struct=model_structure)
+    heat_loss = make_loss(heat, n=3000, struct=model_structure)
     for epoch in range(epochs):
         loss, grads = jax.value_and_grad(heat_loss)(params)
         # gradient descent component

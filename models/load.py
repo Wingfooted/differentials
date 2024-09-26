@@ -35,7 +35,7 @@ def visualize_3d(u: Callable, *args, defenition: int = 1000, title="U", xlab="x"
     # a not on u: Callabale, has to be a lambda function with one jax input
     xs = list()
     x1_domains = args[0]
-    x2_domains = args[0]
+    x2_domains = args[1]
 
     for x1 in x1_domains:
         for x2 in x2_domains:
