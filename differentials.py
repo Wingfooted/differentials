@@ -59,8 +59,7 @@ class expression:
     def u(self,
           struct: Sequence[int] = (20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20)
           ) -> Tuple:
-        schema = (len(self.variables), *struct)
-        u_hat = Model(schema)
+        u_hat = Model(struct)
         forward_rng, model_rng = random.split(random.key(1), (2,))
         x = list()
         for domain in self.domains:

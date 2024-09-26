@@ -38,30 +38,30 @@ if __name__ == '__main__':
     dt = lambda u: jax.grad(u, argnums=1)
 
     heat = expression(
-        lambda u: lambda x, t: dt(u)(x, t) + 0.001 * dx(dx(u))(x, t),
+        lambda u: lambda x, t: dt(u)(x, t) + 0.01 * dx(dx(u))(x, t),
         var=("x", "t"),
         boundaries=(
             # insulated ends u_x(0, t) = 0
             boundary(
                 LHS=lambda u: lambda x, t: u(x, t),
-                RHS=lambda u: lambda x, t: 1,
-                con=(0.0, "t")
+                RHS=lambda u: lambda x, t: 0,
+                con=(-1.0, "t")
             ),
             # insulated end u_x(L, t) = 0
             boundary(
                 LHS=lambda u: lambda x, t: u(x, t),
-                RHS=lambda u: lambda x, t: -1,
+                RHS=lambda u: lambda x, t: 0,
                 con=(1.0, "t")
             ),
             # inital function. u(x, 0) = sin(x)
             initial(
                 LHS=lambda u: lambda x, t: u(x, t),
-                RHS=lambda u: lambda x, t: 2 * jnp.exp(x)-1, 
+                RHS=lambda u: lambda x, t: 2 * jnp.sin(x * jnp.pi),
                 con=("x", 0.0)
             )
         ),
         x=domain(-1, 1),
-        t=domain(0, 29)
+        t=domain(0, 1)
     )
 
     '''initial(
@@ -88,7 +88,7 @@ if __name__ == '__main__':
         params = jax.tree.map(lambda p, g, v: p - (lr / (jnp.sqrt(v) + epsilon)) * g, params, grads, velocity)
         return velocity, params
 
-    heat_loss = make_loss(heat, n=100, struct=model_structure)
+    heat_loss = make_loss(heat, n=50, struct=model_structure)
     for epoch in range(epochs):
         loss, grads = jax.value_and_grad(heat_loss)(params)
         # gradient descent component
