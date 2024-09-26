@@ -3,6 +3,7 @@ import jax.random as random
 import jax.numpy as jnp
 
 import flax
+from flax import serialization
 
 from differentials import expression, domain, boundary, initial
 from tools import visualize_3d
@@ -12,8 +13,9 @@ from tools import visualize_3d
 # makes loss from a PDE expression
 # assumes u_hat
 
+    #model_layout: Sequence[int] = (20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20)
 
-def make_loss(expression, n=1000, struct=(1, 1)):
+def make_loss(expression, n=1000, struct=(20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20)):
     u_hat, _ = expression.u(struct=struct)
     # hyper param, num of samples per loss
     def loss(params):
@@ -21,16 +23,11 @@ def make_loss(expression, n=1000, struct=(1, 1)):
         def loss_unit(x):
             error = expression.loss(
                 lambda x, t: u_hat.apply(params, jnp.array((x, t)))[0],
-                x[0], x[1]  # this is for x and t. No better way exists to do this
-            )
+                x[0], x[1])
             return error
         return jnp.mean(jax.vmap(loss_unit)(xs))
-        # here there is a contention. What loss is better, the worst point tested, or the average point tested
     return jax.jit(loss)
 
-# TRAINING A MODEL on an Expression
-
-# Solving the PDE Heat Equation
 
 if __name__ == '__main__':
 
@@ -74,8 +71,9 @@ if __name__ == '__main__':
     )'''
     # initial visualize_3d(lambda x: u_hat.apply(params, x), heat, defenition=80)
 
-    model_structure = (30, 30, 30, 30, 30, 30, 30, 30, 30, 30)
-    epochs = 10
+    model_structure = (20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20)
+
+    epochs = 1000
     epoch_logs = 1  # how often to log loss
     lr = 0.001
     gamma = 0.99
@@ -101,6 +99,10 @@ if __name__ == '__main__':
 
         if epoch % epoch_logs == 0:
             print(f"epoch: {epoch}, loss: {loss}")
-    u = lambda x: u_hat.apply(params, x),
 
-    visualize_3d(u, heat, defenition=200)
+    print("saving")
+    bytes_output = serialization.to_bytes(params)
+    with open("models/bins/heat.bin", "wb") as f:
+        f.write(bytes_output)
+
+    pass

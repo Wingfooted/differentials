@@ -57,7 +57,7 @@ class expression:
         return boundary_loss + value
 
     def u(self,
-          struct: Sequence[int] = (8, 8, 8, 8, 8, 8)
+          struct: Sequence[int] = (20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20)
           ) -> Tuple:
         schema = (len(self.variables), *struct)
         u_hat = Model(schema)
