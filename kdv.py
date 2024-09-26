@@ -37,31 +37,33 @@ if __name__ == '__main__':
     dx = lambda u: jax.grad(u, argnums=0)
     dt = lambda u: jax.grad(u, argnums=1)
 
+    alpha = 0.8
+
     heat = expression(
-        lambda u: lambda x, t: dt(u)(x, t) + 0.008 * dx(dx(u))(x, t),
+        lambda u: lambda x, t: dt(u)(x, t) + 6 * u(x, t) * dx(u)(x, t) + dx(dx(dx(u)))(x, t),
         var=("x", "t"),
         boundaries=(
             # insulated ends u_x(0, t) = 0
             boundary(
-                LHS=lambda u: lambda x, t: dx(u)(x, t),
+                LHS=lambda u: lambda x, t: u(x, t),
                 RHS=lambda u: lambda x, t: 0,
-                con=(-1.0, "t")
+                con=(0, "t")
             ),
             # insulated end u_x(L, t) = 0
             boundary(
-                LHS=lambda u: lambda x, t: dx(u)(x, t),
+                LHS=lambda u: lambda x, t: u(x, t),
                 RHS=lambda u: lambda x, t: 0,
-                con=(1.0, "t")
+                con=(50, "t")
             ),
             # inital function. u(x, 0) = sin(x)
             initial(
                 LHS=lambda u: lambda x, t: u(x, t),
-                RHS=lambda u: lambda x, t: jnp.cos(jnp.pi*x) + jnp.exp(x),
+                RHS=lambda u: lambda x, t: jnp.exp(- jnp.square(x-30)),
                 con=("x", 0.0)
             )
         ),
-        x=domain(-1, 1),
-        t=domain(0, 5)
+        x=domain(0, 50),
+        t=domain(0, 100)
     )
 
     '''initial(
@@ -73,7 +75,7 @@ if __name__ == '__main__':
 
     model_structure = (20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20)
 
-    epochs = 1000
+    epochs = 2000
     epoch_logs = 1  # how often to log loss
     lr = 0.00007
     gamma = 0.99
@@ -102,7 +104,7 @@ if __name__ == '__main__':
 
     print("saving")
     bytes_output = serialization.to_bytes(params)
-    with open("models/bins/heat.bin", "wb") as f:
+    with open("models/bins/kdv.bin", "wb") as f:
         f.write(bytes_output)
 
     pass
