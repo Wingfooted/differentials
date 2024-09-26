@@ -14,6 +14,6 @@ if __name__ == '__main__':
 
     load.visualize_3d(lambda x: model.apply(params, x),
                  jnp.linspace(-1, 1, 100),
-                 jnp.linspace(0, 3, 100),
+                 jnp.linspace(0, 5, 100),
                  defenition=100)
 

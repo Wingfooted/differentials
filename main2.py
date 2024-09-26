@@ -73,9 +73,9 @@ if __name__ == '__main__':
 
     model_structure = (20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20)
 
-    epochs = 100000
+    epochs = 10000
     epoch_logs = 1  # how often to log loss
-    lr = 0.001
+    lr = 0.0001
     gamma = 0.99
     epsilon = 1e-6
 
@@ -88,7 +88,7 @@ if __name__ == '__main__':
         params = jax.tree.map(lambda p, g, v: p - (lr / (jnp.sqrt(v) + epsilon)) * g, params, grads, velocity)
         return velocity, params
 
-    heat_loss = make_loss(heat, n=1000, struct=model_structure)
+    heat_loss = make_loss(heat, n=10, struct=model_structure)
     for epoch in range(epochs):
         loss, grads = jax.value_and_grad(heat_loss)(params)
         # gradient descent component
