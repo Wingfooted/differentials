@@ -4,7 +4,7 @@ import jax.random as random
 import load
 
 if __name__ == '__main__':
-    model, params = load.load_model("bins/heat.bin")
+    model, params = load.load_model("bins/kdv.bin")
     bruh = load.Model((20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20))
 
     test = bruh.init(random.key(0), jnp.array((1, 1)))
@@ -13,7 +13,6 @@ if __name__ == '__main__':
     y = model.apply(params, x)
 
     load.visualize_3d(lambda x: model.apply(params, x),
-                 jnp.linspace(-1, 1, 100),
+                 jnp.linspace(0, 1, 100),
                  jnp.linspace(0, 1, 100),
                  defenition=100)
-

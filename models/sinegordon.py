@@ -4,7 +4,7 @@ import jax.random as random
 import load
 
 if __name__ == '__main__':
-    model, params = load.load_model("bins/heat.bin")
+    model, params = load.load_model("bins/sinegordon.bin")
     bruh = load.Model((20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20))
 
     test = bruh.init(random.key(0), jnp.array((1, 1)))
