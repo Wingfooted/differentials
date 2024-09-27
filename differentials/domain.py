@@ -14,11 +14,15 @@ def normal(key):
 
 
 class return_domain:
-    def __new__(self, minval, maxval, key=random.key(1), sampling_method="UNIFORM"):
+    def __init__(self, minval, maxval, key=random.key(1), sampling_method="UNIFORM"):
+        self.minval = minval
+        self.maxval = maxval
         if sampling_method == "UNIFORM":
-            return uniform(minval, maxval, key)
+            self.gen = uniform(minval, maxval, key)
         if sampling_method == "NORMAL":
-            return normal(key)
+            self.gen = normal(key)
+    def __call__(self):
+        return next(self.gen)
 
 
 class domain:

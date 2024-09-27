@@ -4,8 +4,11 @@ import jax.random as random
 
 from typing import Callable, Tuple, Sequence
 from .model import Model
+from .boundary import boundary
 
 from .domain import domain
+
+
 
 
 class term:
@@ -102,11 +105,17 @@ class expression:
     def __init__(self,
                  *loss_fns,
                  **domains):
-        self.number_independent = len(domains.keys())
-        self.loss_conditions = loss_fns
-        self.kwargs = domains
-        self.domains = [domain("XER") if d == True else d for d in domains.values()]
-        self.vars = domains.keys()
+
+        empty = list()
+        self.vars = list(domains.keys())
+        for fn in loss_fns:
+            if isinstance(fn, boundary):
+                callable_fn = fn.make_loss_fn(self.vars)
+                empty.append(callable_fn)
+
+        self.loss_fns = empty
+        self.domains = domains
+
 
     def loss(self, u: Callable, x: jax.Array):
         # where x is a vector
